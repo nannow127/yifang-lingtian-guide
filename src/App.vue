@@ -450,36 +450,6 @@ const exportUserData = () => {
           </h1>
         </div>
       </header>
-      <section class="stats">
-        <div>
-          <el-icon><Dish /></el-icon>
-          <p>
-            <b>{{ data.recipes.length }}</b
-            ><span>收录菜谱</span>
-          </p>
-        </div>
-        <div>
-          <el-icon><Food /></el-icon>
-          <p>
-            <b>{{ data.ingredientSources.length }}</b
-            ><span>菜谱食材</span>
-          </p>
-        </div>
-        <div>
-          <el-icon><Star /></el-icon>
-          <p>
-            <b>{{ state.favorites.length }}</b
-            ><span>收藏菜谱</span>
-          </p>
-        </div>
-        <div>
-          <el-icon><Collection /></el-icon>
-          <p>
-            <b>{{ state.cooked.length }}</b
-            ><span>已经做过</span>
-          </p>
-        </div>
-      </section>
       <section class="toolbar">
         <el-input
           v-model="search"
@@ -517,7 +487,14 @@ const exportUserData = () => {
               value="profit" /><el-option
               label="配料少优先"
               value="ingredients" /></el-select
-          ><el-checkbox v-model="favoriteOnly">只看收藏</el-checkbox></template
+          ><el-button
+            class="favorite-filter"
+            type="warning"
+            :plain="!favoriteOnly"
+            @click="favoriteOnly = !favoriteOnly"
+            ><el-icon><Star /></el-icon>收藏菜谱
+            {{ state.favorites.length }}</el-button
+          ></template
         ><el-select
           v-if="active === 'crops'"
           v-model="season"

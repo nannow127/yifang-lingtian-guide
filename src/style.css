@@ -122,42 +122,6 @@ header .el-button {
   border-color: #d9d2c2;
   background: #fff;
 }
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 18px;
-}
-.stats > div {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 18px 20px;
-  border: 1px solid #e8e1d3;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.72);
-}
-.stats .el-icon {
-  width: 35px;
-  height: 35px;
-  border-radius: 10px;
-  background: #e4eee8;
-  color: #2f705b;
-  font-size: 18px;
-}
-.stats p,
-.stats b,
-.stats span {
-  display: block;
-  margin: 0;
-}
-.stats b {
-  font-size: 23px;
-}
-.stats span {
-  color: #879088;
-  font-size: 12px;
-}
 .toolbar {
   display: flex;
   align-items: center;
@@ -174,6 +138,9 @@ header .el-button {
 }
 .toolbar .el-select {
   width: 145px;
+}
+.favorite-filter {
+  flex-shrink: 0;
 }
 .content-panel,
 .table-panel,
@@ -549,9 +516,6 @@ header .el-button {
   .recipe-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  .stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .toolbar {
     flex-wrap: wrap;
   }
@@ -587,12 +551,6 @@ header .el-button {
   }
   header h1 {
     font-size: 25px;
-  }
-  .stats {
-    gap: 8px;
-  }
-  .stats > div {
-    padding: 13px;
   }
   .recipe-grid,
   .npc-grid,
