@@ -172,7 +172,7 @@ header .el-button {
 }
 .recipe-card {
   position: relative;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid #e8e2d7;
   border-radius: 12px;
   background: #fffdf8;
@@ -187,49 +187,57 @@ header .el-button {
 .recipe-card.cooked {
   background: #f2f6f2;
 }
-.card-top {
+.recipe-card-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 10px;
 }
-.card-top-end {
-  justify-content: flex-end;
-}
-.recipe-index {
-  color: #b5a98e;
-  font: italic 16px serif;
+.recipe-title {
+  min-width: 0;
+  flex: 1;
 }
 .card-buttons {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 4px;
+}
+.card-buttons .el-checkbox {
+  margin-right: 0;
 }
 .card-buttons .selected {
   color: #d99c25;
   background: #fff2cd;
 }
 .recipe-card h3 {
-  margin: 5px 0 3px;
+  overflow: hidden;
+  margin: 0 0 2px;
   font: 700 18px serif;
   color: #21493c;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .effect {
-  height: 30px;
-  margin: 0 0 8px;
+  overflow: hidden;
+  margin: 0;
   color: #748078;
   font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .tags {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
   min-height: 24px;
+  margin-top: 8px;
 }
 .ingredients {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  margin: 10px 0;
+  margin: 8px 0;
 }
 .ingredients span {
   padding: 4px 6px;
@@ -241,7 +249,7 @@ header .el-button {
 .card-foot {
   display: flex;
   justify-content: space-between;
-  padding-top: 9px;
+  padding-top: 7px;
   border-top: 1px dashed #ddd5c7;
   color: #8f9189;
   font-size: 11px;

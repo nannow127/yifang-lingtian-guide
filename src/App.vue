@@ -601,7 +601,11 @@ const exportUserData = () => {
             :class="{ cooked: cookedSet.has(recipe.name) }"
             @click="openRecipe(recipe)"
           >
-            <div class="card-top card-top-end">
+            <div class="recipe-card-head">
+              <div class="recipe-title">
+                <h3>{{ recipe.name }}</h3>
+                <p v-if="recipe.effect" class="effect">{{ recipe.effect }}</p>
+              </div>
               <div class="card-buttons" @click.stop>
                 <el-button
                   circle
@@ -616,8 +620,6 @@ const exportUserData = () => {
                 >
               </div>
             </div>
-            <h3>{{ recipe.name }}</h3>
-            <p v-if="recipe.effect" class="effect">{{ recipe.effect }}</p>
             <div class="tags">
               <el-tag v-if="recipe.stamina" type="success"
                 >体力 +{{ recipe.stamina }}</el-tag
