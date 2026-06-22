@@ -3,6 +3,7 @@
   color: #263b32;
   background: #f5f2e9;
   font-synthesis: none;
+  --el-component-size: 30px;
 }
 * {
   box-sizing: border-box;
@@ -21,8 +22,8 @@ input {
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  width: 230px;
-  padding: 28px 18px;
+  width: 210px;
+  padding: 18px 12px;
   background: #173b31;
   color: #eef5e9;
   overflow-y: auto;
@@ -31,25 +32,25 @@ input {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 10px 28px;
+  gap: 9px;
+  padding: 0 8px 18px;
 }
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 45px;
-  height: 45px;
+  width: 40px;
+  height: 40px;
   border: 1px solid #d5b66f;
   border-radius: 14px;
   color: #d5b66f;
-  font: 700 23px serif;
+  font: 700 21px serif;
 }
 .brand strong,
 .brand span {
   display: block;
 }
 .brand strong {
-  font: 700 20px serif;
+  font: 700 18px serif;
   letter-spacing: 2px;
 }
 .brand span {
@@ -62,9 +63,9 @@ input {
   background: transparent;
 }
 .sidebar .el-menu-item {
-  height: 50px;
-  margin: 5px 0;
-  border-radius: 10px;
+  height: 42px;
+  margin: 2px 0;
+  border-radius: 8px;
   color: #b8ccc3;
 }
 .sidebar .el-menu-item:hover,
@@ -73,8 +74,8 @@ input {
   color: #fff;
 }
 .side-note {
-  margin: 24px 10px 0;
-  padding-top: 18px;
+  margin: 14px 8px 0;
+  padding-top: 12px;
   border-top: 1px solid #31594d;
 }
 .side-note span,
@@ -95,17 +96,17 @@ input {
   font-size: 12px;
 }
 main {
-  margin-left: 230px;
-  padding: 38px 4.5vw 60px;
+  margin-left: 210px;
+  padding: 24px 2.5vw 36px;
 }
 header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 }
 .eyebrow {
-  margin: 0 0 7px;
+  margin: 0 0 4px;
   color: #a2772a;
   font-size: 12px;
   font-weight: 700;
@@ -113,23 +114,23 @@ header {
 }
 h1 {
   margin: 0;
-  font: 700 32px serif;
+  font: 700 28px serif;
   color: #163d32;
 }
 header .el-button {
-  height: 42px;
-  padding: 0 18px;
+  height: 34px;
+  padding: 0 13px;
   border-color: #d9d2c2;
   background: #fff;
 }
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 13px;
-  margin-bottom: 18px;
+  gap: 7px;
+  padding: 9px;
+  margin-bottom: 12px;
   border: 1px solid #e5dfd3;
-  border-radius: 14px;
+  border-radius: 11px;
   background: #fff;
 }
 .toolbar > .el-input {
@@ -146,15 +147,15 @@ header .el-button {
 .table-panel,
 .profit-intro,
 .ranking {
-  padding: 24px;
+  padding: 16px;
   border: 1px solid #e4ddcf;
-  border-radius: 16px;
+  border-radius: 13px;
   background: #fff;
 }
 .section-title {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 .section-title p {
   margin: 0;
@@ -168,13 +169,13 @@ header .el-button {
 .recipe-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 9px;
 }
 .recipe-card {
   position: relative;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid #e8e2d7;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fffdf8;
   cursor: pointer;
   transition: 0.2s;
@@ -191,7 +192,7 @@ header .el-button {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 7px;
 }
 .recipe-title {
   min-width: 0;
@@ -213,7 +214,7 @@ header .el-button {
 .recipe-card h3 {
   overflow: hidden;
   margin: 0 0 2px;
-  font: 700 18px serif;
+  font: 700 17px serif;
   color: #21493c;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -229,18 +230,18 @@ header .el-button {
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  min-height: 24px;
-  margin-top: 8px;
+  gap: 4px;
+  min-height: 22px;
+  margin-top: 6px;
 }
 .ingredients {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  margin: 8px 0;
+  margin: 6px 0;
 }
 .ingredients span {
-  padding: 4px 6px;
+  padding: 3px 5px;
   border-radius: 6px;
   background: #edf4ef;
   color: #35604e;
@@ -249,7 +250,7 @@ header .el-button {
 .card-foot {
   display: flex;
   justify-content: space-between;
-  padding-top: 7px;
+  padding-top: 6px;
   border-top: 1px dashed #ddd5c7;
   color: #8f9189;
   font-size: 11px;
@@ -266,29 +267,29 @@ header .el-button {
 }
 .el-pagination {
   justify-content: center;
-  margin-top: 24px;
+  margin-top: 14px;
 }
 .npc-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 10px;
 }
 .npc-card {
-  padding: 24px;
+  padding: 16px;
   border: 1px solid #e3dccf;
-  border-radius: 16px;
+  border-radius: 12px;
   background: #fff;
 }
 .npc-name {
   display: flex;
   align-items: center;
-  gap: 13px;
+  gap: 10px;
 }
 .npc-name > span {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: #315f50;
   color: white;
@@ -304,7 +305,7 @@ header .el-button {
   font-size: 12px;
 }
 .npc-card h4 {
-  margin: 20px 0 9px;
+  margin: 13px 0 7px;
   color: #876321;
   font-size: 12px;
 }
@@ -312,11 +313,11 @@ header .el-button {
 .gift-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 5px;
 }
 .link-list button,
 .gift-list span {
-  padding: 6px 9px;
+  padding: 4px 7px;
   border: 0;
   border-radius: 8px;
   background: #edf3ee;
@@ -331,7 +332,7 @@ header .el-button {
   color: #805f28;
 }
 .table-panel {
-  padding: 10px;
+  padding: 6px;
 }
 .table-panel .el-tag {
   margin-right: 4px;
@@ -340,15 +341,15 @@ header .el-button {
 .riddle-panel .section-title,
 .atlas-panel .section-title,
 .pavilion-panel .section-title {
-  padding: 12px 14px 0;
+  padding: 8px 10px 0;
 }
 .inline-materials {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 4px;
 }
 .inline-materials span {
-  padding: 5px 7px;
+  padding: 3px 6px;
   border-radius: 7px;
   background: #eaf4ed;
   color: #376451;
@@ -373,28 +374,28 @@ header .el-button {
 }
 .price-page {
   display: grid;
-  gap: 18px;
+  gap: 12px;
 }
 .profit-layout {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  gap: 18px;
+  gap: 12px;
 }
 .profit-intro h2 {
-  font: 700 27px serif;
+  font: 700 23px serif;
 }
 .profit-intro > p:not(.eyebrow) {
   color: #747d76;
-  line-height: 1.8;
+  line-height: 1.6;
 }
 .export-button {
-  margin-top: 18px;
+  margin-top: 12px;
 }
 .source-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
+  gap: 6px;
+  margin-top: 10px;
 }
 .source-links a {
   color: #33745e;
@@ -415,7 +416,7 @@ header .el-button {
   color: #956b24;
 }
 .legacy-note {
-  padding: 9px 11px;
+  padding: 7px 9px;
   border-radius: 8px;
   background: #fff4df;
   color: #896522;
@@ -424,13 +425,13 @@ header .el-button {
 .price-tables {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: 12px;
 }
 .table-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px 16px;
+  padding: 6px 8px 10px;
 }
 .table-heading h3,
 .table-heading p {
@@ -454,8 +455,8 @@ header .el-button {
 .rank-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px;
+  gap: 10px;
+  padding: 8px;
   border-bottom: 1px solid #eee9df;
   cursor: pointer;
 }
@@ -484,16 +485,16 @@ header .el-button {
   font-size: 12px;
 }
 .recipe-effect {
-  padding: 11px;
+  padding: 8px;
   border-left: 3px solid #4e8b6e;
   background: #f1f6f2;
 }
 .detail-ingredients {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 .detail-ingredients > div {
-  padding: 10px;
+  padding: 7px;
   border-radius: 9px;
   background: #eef5f0;
 }
@@ -510,13 +511,13 @@ header .el-button {
 .price-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 .price-row strong {
   color: #287154;
 }
 .unlock {
-  margin-top: 18px;
+  margin-top: 12px;
   color: #795f31;
   font-size: 12px;
 }
@@ -538,7 +539,7 @@ header .el-button {
   .sidebar {
     position: static;
     width: auto;
-    padding: 14px;
+    padding: 10px;
   }
   .brand {
     padding-bottom: 10px;
@@ -555,7 +556,7 @@ header .el-button {
   }
   main {
     margin: 0;
-    padding: 22px 14px;
+    padding: 14px 10px;
   }
   header h1 {
     font-size: 25px;
@@ -568,4 +569,21 @@ header .el-button {
   .toolbar .el-select {
     width: calc(50% - 6px);
   }
+}
+
+.el-table .el-table__cell {
+  padding: 6px 0;
+}
+.el-table .cell {
+  line-height: 1.35;
+}
+.el-tag {
+  height: 24px;
+  padding: 0 7px;
+}
+.el-alert {
+  padding: 7px 10px;
+}
+.el-dialog {
+  --el-dialog-padding-primary: 16px;
 }
