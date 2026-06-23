@@ -15,6 +15,8 @@ const state = reactive({
   unlockDone: saved.unlockDone || [],
   riddlesKnown: saved.riddlesKnown || [],
   questDone: saved.questDone || [],
+  workshopBuilt: saved.workshopBuilt || [],
+  processingQty: saved.processingQty || {},
 });
 watch(state, (value) => localStorage.setItem(STORAGE_KEY, JSON.stringify(value)), { deep: true });
 
@@ -24,6 +26,8 @@ const npc = ref('');
 const preference = ref('');
 const ingredient = ref('');
 const season = ref('');
+const cropDays = ref('');
+const cropHarvests = ref('');
 const favoriteOnly = ref(false);
 const sortBy = ref('stamina');
 const recipeDialog = ref(null);
@@ -40,6 +44,9 @@ const monsterLocation = ref('');
 const questChapter = ref(data.quests[0]?.chapter || '第一章');
 const pillCategory = ref('');
 const atlasTab = ref('sources');
+const processingTab = ref(data.processing[0]?.facility || '发酵缸');
+const workshopCategory = ref('');
+const selectedWorkshopId = ref('fermentation-jar');
 
 const cropByName = new Map(data.crops.map((crop) => [crop.name, crop]));
 const sourceByName = new Map(data.ingredientSources.map((item) => [item.name, item]));
@@ -61,6 +68,13 @@ const recipeSalePrice = (recipe) => Number(state.salePrices[recipe.name] || comm
 const profit = (recipe) => recipeSalePrice(recipe) - knownCost(recipe);
 const formatQualityPrices = (prices) =>
   [prices?.common != null && `凡 ${prices.common}`, prices?.good != null && `良 ${prices.good}`, prices?.excellent != null && `佳 ${prices.excellent}`].filter(Boolean).join(' / ');
+const qualityKeyMap = {
+  凡: 'common',
+  良: 'good',
+  佳: 'excellent',
+};
+const recipeQualityPrice = (recipe, quality) => communityRecipeByName.get(recipe.name)?.[qualityKeyMap[quality]] || '';
+const itemQualityPrice = (item, quality) => item.prices?.[quality] ?? item.legacy?.[qualityKeyMap[quality]] ?? '';
 
 const filteredRecipes = computed(() => {
   const key = search.value.trim().toLowerCase();
@@ -83,9 +97,32 @@ const filteredRecipes = computed(() => {
           : b.stamina - a.stamina,
   );
 });
+const seasonOrder = ['春', '夏', '秋', '冬'];
+const cropDayOptions = [...new Set(data.crops.map((crop) => crop.days).filter(Boolean))].sort((a, b) => a - b);
+const cropHarvestOptions = [...new Set(data.crops.map((crop) => crop.harvests).filter(Boolean))].sort((a, b) => a - b);
+const seasonClass = (value) =>
+  ({
+    春: 'spring',
+    夏: 'summer',
+    秋: 'autumn',
+    冬: 'winter',
+  })[value] || '';
+const cropSeasonRank = (crop) => {
+  if (!season.value) return 0;
+  const selectedIndex = crop.seasons.indexOf(season.value);
+  return crop.seasons.length * 10 + (selectedIndex < 0 ? 9 : selectedIndex);
+};
 const cropResults = computed(() =>
   data.crops
-    .filter((crop) => (!search.value || [crop.name, crop.seed, crop.special].join(' ').toLowerCase().includes(search.value.toLowerCase())) && (!season.value || crop.seasons.includes(season.value)))
+    .map((crop, index) => ({ ...crop, index }))
+    .filter(
+      (crop) =>
+        (!search.value || [crop.name, crop.seed, crop.special].join(' ').toLowerCase().includes(search.value.toLowerCase())) &&
+        (!season.value || crop.seasons.includes(season.value)) &&
+        (!cropDays.value || crop.days === cropDays.value) &&
+        (!cropHarvests.value || crop.harvests === cropHarvests.value),
+    )
+    .sort((a, b) => cropSeasonRank(a) - cropSeasonRank(b) || seasonOrder.indexOf(a.seasons[0]) - seasonOrder.indexOf(b.seasons[0]) || a.index - b.index)
     .map((crop) => ({
       ...crop,
       recipes: data.recipes.filter((recipe) => recipe.ingredients.some((item) => item.name === crop.name)),
@@ -100,6 +137,7 @@ const npcCards = computed(() =>
     }))
     .filter((card) => !search.value || [card.name, ...card.gifts.map((g) => g.name), ...card.lovedRecipes.map((r) => r.name)].join(' ').includes(search.value)),
 );
+const recipesForIngredient = (name) => data.recipes.filter((recipe) => recipe.ingredients.some((item) => item.name === name));
 const sourceResults = computed(() =>
   data.ingredientSources.filter((item) => item.type !== '待补充' && (!search.value || `${item.name}${item.source}${item.type}`.toLowerCase().includes(search.value.toLowerCase()))),
 );
@@ -179,6 +217,59 @@ const pillResults = computed(() => {
   const key = search.value.trim().toLowerCase();
   return data.pills.filter((item) => (!key || `${item.name}${item.effect}`.toLowerCase().includes(key)) && (!pillCategory.value || item.category === pillCategory.value));
 });
+const processingFacilities = computed(() =>
+  data.processing.map((facility) => ({
+    ...facility,
+    count: facility.items.length,
+  })),
+);
+const currentProcessing = computed(() => data.processing.find((facility) => facility.facility === processingTab.value) || data.processing[0]);
+const processingResults = computed(() => {
+  const key = search.value.trim().toLowerCase();
+  return (currentProcessing.value?.items || []).filter((item) => !key || `${item.product}${item.source}${item.use}`.toLowerCase().includes(key));
+});
+const workshopCategories = [...new Set(data.workshopFacilities.map((item) => item.category))];
+const workshopSortWeight = (item) => {
+  if (item.id === 'warehouse' || item.id === 'octopath-well') return 30;
+  if (item.category === '生产设施') return 20;
+  return 10;
+};
+const workshopResults = computed(() => {
+  const key = search.value.trim().toLowerCase();
+  return data.workshopFacilities
+    .filter((item) => !item.upgradeOf)
+    .filter((item) => {
+      const upgrades = data.workshopFacilities.filter((upgrade) => upgrade.upgradeOf === item.id);
+      const haystack = [item, ...upgrades].map((entry) => `${entry.name}${entry.category}${entry.purpose}${entry.unlock}${entry.materials.map((material) => material.name).join('')}`).join('');
+      return (!key || haystack.toLowerCase().includes(key)) && (!workshopCategory.value || item.category === workshopCategory.value);
+    })
+    .sort((a, b) => workshopSortWeight(a) - workshopSortWeight(b));
+});
+const selectedWorkshop = computed(() => data.workshopFacilities.find((item) => item.id === selectedWorkshopId.value) || workshopResults.value[0] || data.workshopFacilities[0]);
+const selectedWorkshopUpgrades = computed(() => data.workshopFacilities.filter((item) => item.upgradeOf === selectedWorkshop.value?.id));
+const workshopStats = computed(() => ({
+  total: data.workshopFacilities.filter((item) => !item.upgradeOf).length,
+  confirmed: data.workshopFacilities.filter((item) => !item.upgradeOf && item.status === '已确认').length,
+  built: state.workshopBuilt.length,
+}));
+const materialText = (material) => (material.qty ? `${material.name} ×${material.qty}` : material.note ? `${material.name}（${material.note}）` : material.name);
+const processingQty = (row) => Number(state.processingQty[row.key] || row.qty || 1);
+const splitNames = (value) =>
+  value
+    .split('/')
+    .map((name) => name.trim())
+    .filter(Boolean);
+const recipeLinksForNames = (names) => data.recipes.filter((recipe) => recipe.ingredients.some((ingredient) => names.some((name) => ingredient.name.includes(name) || name.includes(ingredient.name))));
+const workshopOutputs = computed(() => {
+  const processingName = selectedWorkshop.value?.processingFacility;
+  if (!processingName) return [];
+  const facility = data.processing.find((item) => item.facility === processingName);
+  return (facility?.items || []).map((item) => ({
+    ...item,
+    key: `${processingName}-${item.product}`,
+    recipes: recipeLinksForNames(splitNames(item.product)),
+  }));
+});
 const toggle = (list, name) => {
   const index = list.indexOf(name);
   index >= 0 ? list.splice(index, 1) : list.push(name);
@@ -193,12 +284,15 @@ const resetFilters = () => {
   preference.value = '';
   ingredient.value = '';
   season.value = '';
+  cropDays.value = '';
+  cropHarvests.value = '';
   exchangeCategory.value = '';
   riddleType.value = '';
   unlockGroup.value = '';
   fishLocation.value = '';
   monsterLocation.value = '';
   pillCategory.value = '';
+  workshopCategory.value = '';
   favoriteOnly.value = false;
 };
 const topProfits = computed(() =>
@@ -235,6 +329,8 @@ const exportUserData = () => {
         <el-menu-item index="npc"><el-icon><Star /></el-icon><span>人物喜好</span></el-menu-item>
         <!-- prettier-ignore -->
         <el-menu-item index="crops"><el-icon><Sunny /></el-icon><span>种植规划</span></el-menu-item>
+        <!-- prettier-ignore -->
+        <el-menu-item index="workshop"><el-icon><Grid /></el-icon><span>作坊制作</span></el-menu-item>
         <el-menu-item index="quests">
           <el-icon><Collection /></el-icon>
           <span>主线任务</span>
@@ -266,6 +362,7 @@ const exportUserData = () => {
                 recipes: '今天做点什么？',
                 npc: '投其所好，事半功倍',
                 crops: '顺时而种，满载而归',
+                workshop: '先造设施，再串产物',
                 exchange: '找牧夏换点好东西',
                 riddles: '灯火映谜，妙趣横生',
                 pavilion: '琼珍百宝，逐项解锁',
@@ -277,7 +374,7 @@ const exportUserData = () => {
           </h1>
         </div>
       </header>
-      <section v-if="active !== 'profit'" class="toolbar">
+      <section v-if="active !== 'profit' && active !== 'workshop'" class="toolbar">
         <el-button v-if="active === 'recipes'" class="favorite-filter" type="warning" :plain="!favoriteOnly" @click="favoriteOnly = !favoriteOnly">
           <el-icon><Star /></el-icon>
           收藏菜谱 {{ state.favorites.length }}
@@ -294,7 +391,14 @@ const exportUserData = () => {
             <el-option label="配料少优先" value="ingredients" />
           </el-select>
         </template>
-        <el-select v-if="active === 'crops'" v-model="season" clearable placeholder="适宜季节"><el-option v-for="s in ['春', '夏', '秋', '冬']" :key="s" :label="s + '季'" :value="s" /></el-select>
+        <template v-if="active === 'crops'">
+          <el-select v-model="season" clearable placeholder="适宜季节"><el-option v-for="s in ['春', '夏', '秋', '冬']" :key="s" :label="s + '季'" :value="s" /></el-select>
+          <el-select v-model="cropDays" clearable placeholder="成熟天数"><el-option v-for="days in cropDayOptions" :key="days" :label="`${days}天`" :value="days" /></el-select>
+          <el-select v-model="cropHarvests" clearable placeholder="收获次数"><el-option v-for="count in cropHarvestOptions" :key="count" :label="`${count}次`" :value="count" /></el-select>
+        </template>
+        <el-select v-if="active === 'workshop'" v-model="workshopCategory" clearable placeholder="设施类别">
+          <el-option v-for="category in workshopCategories" :key="category" :label="category" :value="category" />
+        </el-select>
         <el-select v-if="active === 'exchange'" v-model="exchangeCategory" clearable placeholder="兑换类别">
           <el-option v-for="c in [...new Set(data.exchanges.map((i) => i.category))]" :key="c" :label="c" :value="c" />
         </el-select>
@@ -312,6 +416,9 @@ const exportUserData = () => {
         </el-select>
         <el-select v-if="active === 'atlas' && atlasTab === 'pills'" v-model="pillCategory" clearable placeholder="丹药类型">
           <el-option v-for="category in pillCategories" :key="category" :label="category" :value="category" />
+        </el-select>
+        <el-select v-if="active === 'atlas' && atlasTab === 'processing'" v-model="processingTab" clearable placeholder="加工设施">
+          <el-option v-for="facility in processingFacilities" :key="facility.facility" :label="facility.facility" :value="facility.facility" />
         </el-select>
         <el-button text @click="resetFilters">重置</el-button>
       </section>
@@ -372,49 +479,128 @@ const exportUserData = () => {
 
       <section v-else-if="active === 'crops'" class="table-panel">
         <el-table border :data="cropResults" stripe>
-          <el-table-column prop="name" label="作物" fixed width="110" />
-          <el-table-column label="绝品" width="120">
+          <el-table-column prop="name" label="作物" fixed width="70" />
+          <el-table-column label="绝品" width="70">
             <template #default="{ row }">
               <span v-if="row.special">{{ row.special }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="成熟" width="80" sortable>
+          <el-table-column label="成熟" width="70" sortable>
             <template #default="{ row }">
               <span v-if="row.days">{{ row.days }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="种子价" width="100" sortable>
+          <el-table-column label="种子价" width="80" sortable>
             <template #default="{ row }">
               <span v-if="row.seedPrice">{{ row.seedPrice }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="产量" width="105">
+          <el-table-column label="产量" width="60">
             <template #default="{ row }">
-              <span v-if="row.maxYield">{{ row.minYield }}~{{ row.maxYield }} × {{ row.harvests }}次</span>
+              <span v-if="row.maxYield">{{ row.minYield }}~{{ row.maxYield }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="售价（凡/良/佳）" width="200">
+          <el-table-column label="次数" width="70" sortable>
             <template #default="{ row }">
-              {{
-                formatQualityPrices({
-                  common: row.prices.凡 || null,
-                  good: row.prices.良 || null,
-                  excellent: row.prices.佳 || null,
-                })
-              }}
+              <span v-if="row.harvests">{{ row.harvests }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="季节" width="160">
+          <el-table-column label="凡" width="60" sortable>
             <template #default="{ row }">
-              <el-tag v-for="s in row.seasons" :key="s" size="small">{{ s }}</el-tag>
+              <span v-if="row.prices.凡">{{ row.prices.凡 }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="良" width="60" sortable>
+            <template #default="{ row }">
+              <span v-if="row.prices.良">{{ row.prices.良 }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="佳" width="60" sortable>
+            <template #default="{ row }">
+              <span v-if="row.prices.佳">{{ row.prices.佳 }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="季节" width="145">
+            <template #default="{ row }">
+              <div class="season-cell">
+                <el-tag v-for="s in row.seasons" :key="s" class="season-tag" :class="seasonClass(s)" size="small">{{ s }}</el-tag>
+              </div>
             </template>
           </el-table-column>
           <el-table-column label="可做菜谱" min-width="260">
             <template #default="{ row }">
-              <el-button v-for="recipe in row.recipes.slice(0, 6)" :key="recipe.name" link type="primary" @click="openRecipe(recipe)">{{ recipe.name }}</el-button>
+              <div class="table-recipe-tags">
+                <button v-for="recipe in row.recipes.slice(0, 8)" :key="recipe.name" @click="openRecipe(recipe)">{{ recipe.name }}</button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
+      </section>
+      <section v-else-if="active === 'workshop'" class="workshop-page">
+        <div class="workshop-tabs">
+          <button
+            v-for="item in workshopResults"
+            :key="item.id"
+            class="workshop-tab"
+            :class="{ active: selectedWorkshop.id === item.id, built: state.workshopBuilt.includes(item.id) }"
+            @click="selectedWorkshopId = item.id">
+            <b>{{ item.name }}</b>
+            <small>{{ item.category }} · {{ item.priority }}</small>
+          </button>
+        </div>
+        <div class="workshop-layout">
+          <div v-if="selectedWorkshop" class="workshop-detail">
+            <div v-if="workshopOutputs.length" class="workshop-chain">
+              <el-table :data="workshopOutputs" border stripe size="small">
+                <el-table-column prop="product" label="加工物" min-width="150" />
+                <el-table-column prop="source" label="原料" min-width="150" />
+                <el-table-column label="数量" width="150">
+                  <template #default="{ row }">
+                    <el-input-number v-model="state.processingQty[row.key]" :min="0" :placeholder="String(processingQty(row))" :controls="false" />
+                  </template>
+                </el-table-column>
+                <el-table-column prop="use" label="用途" min-width="220" />
+                <el-table-column label="关联菜谱" min-width="260">
+                  <template #default="{ row }">
+                    <div v-if="row.recipes.length" class="link-list compact-links">
+                      <button v-for="recipe in row.recipes.slice(0, 5)" :key="recipe.name" @click="openRecipe(recipe)">{{ recipe.name }}</button>
+                    </div>
+                    <span v-else class="muted">暂未匹配</span>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <div class="workshop-detail-head">
+              <div>
+                <span class="eyebrow">{{ selectedWorkshop.category }}</span>
+                <h2>{{ selectedWorkshop.name }}</h2>
+                <p>{{ selectedWorkshop.purpose }}</p>
+              </div>
+              <div class="workshop-version-strip">
+                <div class="version-row">
+                  <b>基础版本</b>
+                  <div class="inline-materials workshop-materials">
+                    <span v-for="material in selectedWorkshop.materials" :key="material.name">{{ materialText(material) }}</span>
+                    <span v-if="!selectedWorkshop.materials.length">材料待补充</span>
+                  </div>
+                </div>
+                <div v-for="upgrade in selectedWorkshopUpgrades" :key="upgrade.id" class="version-row">
+                  <b>{{ upgrade.name }}</b>
+                  <div class="inline-materials workshop-materials">
+                    <span v-for="material in upgrade.materials" :key="material.name">{{ materialText(material) }}</span>
+                    <span v-if="!upgrade.materials.length">材料待补充</span>
+                  </div>
+                </div>
+              </div>
+              <div class="workshop-actions">
+                <el-tag v-if="selectedWorkshop.stamina">体力 {{ selectedWorkshop.stamina }}</el-tag>
+                <el-checkbox :model-value="state.workshopBuilt.includes(selectedWorkshop.id)" @change="toggle(state.workshopBuilt, selectedWorkshop.id)">已建造</el-checkbox>
+              </div>
+            </div>
+            <el-empty v-if="!workshopOutputs.length" description="这个设施偏功能建筑，暂无可加工物品链路" />
+          </div>
+        </div>
+        <el-empty v-if="!workshopResults.length" description="没有符合条件的作坊设施" />
       </section>
       <section v-else-if="active === 'exchange'" class="table-panel exchange-panel">
         <div class="section-title">
@@ -507,14 +693,16 @@ const exportUserData = () => {
                   <span class="source-text">{{ row.source }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="相关菜谱" width="220">
+              <el-table-column label="入菜数" width="90" sortable :sort-method="(a, b) => recipesForIngredient(a.name).length - recipesForIngredient(b.name).length">
+                <template #default="{ row }">{{ recipesForIngredient(row.name).length }}</template>
+              </el-table-column>
+              <el-table-column label="相关菜谱" min-width="260">
                 <template #default="{ row }">
-                  {{
-                    data.recipes
-                      .filter((r) => r.ingredients.some((i) => i.name === row.name))
-                      .map((r) => r.name)
-                      .join('、')
-                  }}
+                  <div class="table-recipe-tags">
+                    <button v-for="recipe in recipesForIngredient(row.name)" :key="recipe.name" @click="openRecipe(recipe)">
+                      {{ recipe.name }}
+                    </button>
+                  </div>
                 </template>
               </el-table-column>
             </el-table>
@@ -532,6 +720,19 @@ const exportUserData = () => {
                 <template #default="{ row }">
                   <div class="inline-materials">
                     <span v-for="location in row.locations" :key="location">{{ location }}</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="入菜数" width="90" sortable :sort-method="(a, b) => recipesForIngredient(a.name).length - recipesForIngredient(b.name).length">
+                <template #default="{ row }">{{ recipesForIngredient(row.name).length }}</template>
+              </el-table-column>
+              <el-table-column label="相关菜谱" min-width="260">
+                <template #default="{ row }">
+                  <div class="table-recipe-tags">
+                    <button v-for="recipe in recipesForIngredient(row.name)" :key="recipe.name" @click="openRecipe(recipe)">
+                      {{ recipe.name }}
+                    </button>
+                    <span v-if="!recipesForIngredient(row.name).length" class="muted">暂无</span>
                   </div>
                 </template>
               </el-table-column>
@@ -570,6 +771,42 @@ const exportUserData = () => {
               </el-table-column>
               <el-table-column prop="effect" label="效果" min-width="520" />
             </el-table>
+          </el-tab-pane>
+          <el-tab-pane label="加工制作" name="processing">
+            <div class="processing-overview">
+              <button
+                v-for="facility in processingFacilities"
+                :key="facility.facility"
+                class="processing-switch"
+                :class="{ active: processingTab === facility.facility }"
+                @click="processingTab = facility.facility">
+                <strong>{{ facility.facility }}</strong>
+                <span>{{ facility.count }} 项</span>
+              </button>
+            </div>
+            <div class="section-title processing-title">
+              <div>
+                <p>{{ currentProcessing.facility }} · {{ processingResults.length }} 项加工</p>
+                <span>{{ currentProcessing.note }}</span>
+              </div>
+            </div>
+            <div class="processing-grid">
+              <article v-for="item in processingResults" :key="item.product" class="processing-card">
+                <div>
+                  <span>可制作</span>
+                  <h3>{{ item.product }}</h3>
+                </div>
+                <div class="processing-meta">
+                  <small>原料 / 来源</small>
+                  <strong>{{ item.source }}</strong>
+                </div>
+                <div class="processing-use">
+                  <small>用途</small>
+                  <p>{{ item.use }}</p>
+                </div>
+              </article>
+            </div>
+            <el-empty v-if="!processingResults.length" description="没有符合条件的加工项目" />
           </el-tab-pane>
         </el-tabs>
       </section>
@@ -636,12 +873,20 @@ const exportUserData = () => {
           <el-tabs v-model="priceTab" class="price-tabs">
             <el-tab-pane :label="`菜品售价 (${data.recipes.length})`" name="recipes">
               <el-table border :data="data.recipes.filter((r) => !priceSearch || r.name.includes(priceSearch))" height="520" stripe>
-                <el-table-column prop="name" label="菜品" min-width="160" />
-                <el-table-column label="EA参考（凡/良/佳）" min-width="220">
+                <el-table-column label="菜品" min-width="160">
                   <template #default="{ row }">
-                    <span v-if="communityRecipeByName.has(row.name)">
-                      {{ communityRecipeByName.get(row.name).common }} / {{ communityRecipeByName.get(row.name).good }} / {{ communityRecipeByName.get(row.name).excellent }}
-                    </span>
+                    <button class="name-link" @click="openRecipe(row)">{{ row.name }}</button>
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  v-for="quality in ['凡', '良', '佳']"
+                  :key="quality"
+                  :label="quality"
+                  min-width="90"
+                  sortable
+                  :sort-method="(a, b) => Number(recipeQualityPrice(a, quality) || 0) - Number(recipeQualityPrice(b, quality) || 0)">
+                  <template #default="{ row }">
+                    <span>{{ recipeQualityPrice(row, quality) }}</span>
                   </template>
                 </el-table-column>
                 <el-table-column label="成本" min-width="100">
@@ -678,17 +923,15 @@ const exportUserData = () => {
                     <el-tag>{{ row.category }}</el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column label="售价（凡/良/佳）" min-width="280">
+                <el-table-column
+                  v-for="quality in ['凡', '良', '佳']"
+                  :key="quality"
+                  :label="quality"
+                  min-width="90"
+                  sortable
+                  :sort-method="(a, b) => Number(itemQualityPrice(a, quality) || 0) - Number(itemQualityPrice(b, quality) || 0)">
                   <template #default="{ row }">
-                    <span v-if="row.prices">
-                      {{ row.prices.凡 }} / {{ row.prices.良 }} /
-                      {{ row.prices.佳 }}
-                      <small class="verified">Excel</small>
-                    </span>
-                    <span v-else-if="row.legacy">
-                      {{ formatQualityPrices(row.legacy) }}
-                      <small class="legacy">EA</small>
-                    </span>
+                    <span>{{ itemQualityPrice(row, quality) }}</span>
                   </template>
                 </el-table-column>
                 <el-table-column label="买入价" min-width="120">
